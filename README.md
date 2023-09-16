@@ -165,7 +165,3 @@ if err != nil {
     fmt.Println("Loaded Tokens:", loadedTokens)
 }
 ```
-
-This README.md provides an overview of the NLPK package and how to use its functions. Start using NLPK in your Go projects today!
-
-Feel free to customize the README.md file further as needed for your project.
