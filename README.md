@@ -1,8 +1,34 @@
-# NLPK: Natural Language Processing Toolkit
+# Prose: Natural Language Processing Toolkit
 
-![NLPK Logo](https://example.com/nlpk-logo.png)
+![Prose Logo](https://example.com/Prose-logo.png)
 
-NLPK is a powerful toolkit for natural language processing tasks. It provides various functions to extract, manipulate, and analyze text data efficiently.
+Prose is a powerful toolkit for natural language processing tasks. It provides various functions to extract, manipulate, and analyze text data efficiently.
+
+### Library's Token Extraction Algorithm
+
+The `Prose` library employs a sophisticated algorithm to extract values enclosed between two tokens in a given input text. Here's a visual representation of how it works:
+
+**Example Input Text**: "My name is {NAME} and I'm a developer."
+
+**Extraction Process:**
+
+```
+Input Text: My name is {<------->} and I'm a developer.
+```
+
+1. The library searches for the first token marker '{' and '}' pair in the input text.
+2. Once the opening '{' is found, the algorithm starts reading characters to find the value inside the token.
+3. The library identifies the closing '}' of the first token.
+4. The extracted value 'NAME' is stored for later use.
+5. The algorithm continues searching for the next token.
+6. If additional tokens are present, the process repeats to extract their values.
+
+**Result:**
+
+- The value 'NAME' is extracted from the first token pair '{NAME}'.
+
+The `Prose` library repeats this process for each token pair in the input text, efficiently extracting values between tokens.
+
 
 ## Table of Contents
 
@@ -18,10 +44,10 @@ NLPK is a powerful toolkit for natural language processing tasks. It provides va
 
 ## Installation
 
-To use NLPK, you need to import it into your Go project:
+To use Prose, you need to import it into your Go project:
 
 ```shell
-go get github.com/devalexandre/nlpk
+go get github.com/devalexandre/Prose
 
 ```
 # Usage
@@ -33,9 +59,9 @@ go get github.com/devalexandre/nlpk
 Extract tokens from a text.
 
 ```go
-nlpk := nlpk.NewNLPK()
+p := prose.NewProse()
 input := "Name: {Name}. DOB: {DOB}. Country: {Country}"
-tokens := nlpk.ExtractTokens(input)
+tokens := p.ExtractTokens(input)
 
 // Result: tokens = ["Name", "DOB", "Country"]
 ```
@@ -47,10 +73,10 @@ tokens := nlpk.ExtractTokens(input)
 Get the word before a specific token in a text.
 
 ```go
-nlpk := nlpk.NewNLPK()
+p := prose.NewProse()
 input := "Name: John. Country: USA"
 token := "Name"
-wordBefore := nlpk.GetBeforeToken(input, fmt.Sprintf("{%s}", token))
+wordBefore := p.GetBeforeToken(input, fmt.Sprintf("{%s}", token))
 
 // Result: wordBefore = ""
 ```
@@ -61,10 +87,10 @@ Similarly, you can get the word following a specific token in the text.
 📜 Function: GetAfterToken(input, token string) string
 
 ```go
-nlpk := nlpk.NewNLPK()
+p := prose.NewProse()
 input := "Name: John. Country: USA"
 token := "Country"
-wordAfter := nlpk.GetAfterToken(input, fmt.Sprintf("{%s}", token))
+wordAfter := p.GetAfterToken(input, fmt.Sprintf("{%s}", token))
 
 // Result: wordAfter = ": USA"
 ```
@@ -76,22 +102,22 @@ wordAfter := nlpk.GetAfterToken(input, fmt.Sprintf("{%s}", token))
 Get the value between two tokens using a train configuration.
 
 ```go
-nlpk := nlpk.NewNLPK()
+p := prose.NewProse()
 trainWord := "Name: {NAME}. DOB: {DOB}"
-tokens := nlpk.ExtractTokens(trainWord)
+tokens := p.ExtractTokens(trainWord)
 input := "Name: John. DOB: 01/01/1990"
 
 values := make(map[string]string)
 
 for _, token := range tokens {
-	wordBefore := nlpk.GetBeforeToken(trainWord, fmt.Sprintf("{%s}", token))
-	wordAfter := nlpk.GetAfterToken(trainWord, fmt.Sprintf("{%s}", token))
-	train := nlpk.TokenTrain{
+	wordBefore := p.GetBeforeToken(trainWord, fmt.Sprintf("{%s}", token))
+	wordAfter := p.GetAfterToken(trainWord, fmt.Sprintf("{%s}", token))
+	train := p.TokenTrain{
 		Name:       token,
 		WordBefore: wordBefore,
 		WordAfter:  wordAfter,
 	}
-	value, found := nlpk.GetValueBetweenTokens(input, train)
+	value, found := p.GetValueBetweenTokens(input, train)
 
 	if found {
 		values[token] = value
@@ -109,7 +135,7 @@ for _, token := range tokens {
 Parse values from a text into a struct using struct tags.
 
 ```go
-nlpk := nlpk.NewNLPK()
+p := prose.NewProse()
 input := "Name: John. DOB: 01/01/1990"
 
 type Person struct {
@@ -117,7 +143,7 @@ type Person struct {
 	DOB  string `data:"DOB"`
 }
 person := Person{}
-ok := nlpk.ParseValueToStruct(input, &person, "tokens.json")
+ok := p.ParseValueToStruct(input, &person, "tokens.json")
 
 // Result: person = {Name: "John", DOB: "01/01/1990"}
 
@@ -130,13 +156,13 @@ ok := nlpk.ParseValueToStruct(input, &person, "tokens.json")
 Learn token patterns from a set of training data.
 
 ```go
-nlpk := nlpk.NewNLPK()
+p := prose.NewProse()
 
 dataTrain := []string{
     "Name 6: {NAME}. DOB:{DOB}",
     "Title: {TITLE} DOB: {DOB}",
 }
-learnedTokens := nlpk.Learn(dataTrain)
+learnedTokens := p.Learn(dataTrain)
 fmt.Println("Learned Tokens:", learnedTokens)
 ```
 
@@ -147,18 +173,18 @@ fmt.Println("Learned Tokens:", learnedTokens)
 Save learned tokens to a file and load them for future use.
 
 ```go
-nlpk := nlpk.NewNLPK()
+p := prose.NewProse()
 
 learnedTokens := map[string]TokenTrain{
     "NAME": {Name: "NAME", WordBefore: " 6: ", WordAfter: ". DOB:"},
     "DOB":  {Name: "DOB", WordBefore: "Title: ", WordAfter: ""},
 }
-err := nlpk.Save(learnedTokens, "tokens.json")
+err := p.Save(learnedTokens, "tokens.json")
 if err != nil {
     fmt.Println("Error saving tokens:", err)
 }
 
-loadedTokens, err := nlpk.Load("tokens.json")
+loadedTokens, err := p.Load("tokens.json")
 if err != nil {
     fmt.Println("Error loading tokens:", err)
 } else {

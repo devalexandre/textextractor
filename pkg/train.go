@@ -1,4 +1,4 @@
-package nlpk
+package prose
 
 import (
 	"encoding/json"
@@ -20,14 +20,14 @@ type Extracted struct {
 	Value string
 }
 
-type NLPK struct{}
+type PROSE struct{}
 
-func NewNLPK() *NLPK {
-	return &NLPK{}
+func NewPROSE() *PROSE {
+	return &PROSE{}
 }
 
 // get tokens from input using {}
-func (n NLPK) ExtractTokens(input string) []string {
+func (n PROSE) ExtractTokens(input string) []string {
 	tokens := []string{}
 
 	//use regex to extract tokens from input in {}
@@ -40,7 +40,7 @@ func (n NLPK) ExtractTokens(input string) []string {
 }
 
 // get word before token and after token and create regex to get value between them
-func (n NLPK) GenerateRegex(tokens []string) []string {
+func (n PROSE) GenerateRegex(tokens []string) []string {
 	regex := []string{}
 	for _, token := range tokens {
 		regex = append(regex, `(?P<`+token+`>[^\s]+)`)
@@ -50,7 +50,7 @@ func (n NLPK) GenerateRegex(tokens []string) []string {
 }
 
 // GetBeforeToken retorna os 5 caracteres antes do token na string de entrada.
-func (n NLPK) GetBeforeToken(input string, token string) string {
+func (n PROSE) GetBeforeToken(input string, token string) string {
 	// Define a expressão regular para encontrar o token e os 5 caracteres antes.
 	regex := regexp.MustCompile(`(.{5})` + regexp.QuoteMeta(token))
 
@@ -67,7 +67,7 @@ func (n NLPK) GetBeforeToken(input string, token string) string {
 }
 
 // GetAfterToken retorna os 5 caracteres após o token na string de entrada.
-func (n NLPK) GetAfterToken(input string, token string) string {
+func (n PROSE) GetAfterToken(input string, token string) string {
 	// Define a expressão regular para encontrar o token e os 5 caracteres após.
 	regex := regexp.MustCompile(regexp.QuoteMeta(token) + `(.{5})`)
 
@@ -84,7 +84,7 @@ func (n NLPK) GetAfterToken(input string, token string) string {
 }
 
 // get value between word before and word after
-func (n NLPK) GetValueBetweenTokens(input string, model TokenTrain) (Extracted, bool) {
+func (n PROSE) GetValueBetweenTokens(input string, model TokenTrain) (Extracted, bool) {
 	var regex *regexp.Regexp
 	if len(model.WordAfter) == 0 {
 		regex = regexp.MustCompile(model.WordBefore + `(.+)`)
@@ -113,7 +113,7 @@ func (n NLPK) GetValueBetweenTokens(input string, model TokenTrain) (Extracted, 
 }
 
 // get value using trained model, and if not found value tray next token using recursion
-func (n NLPK) GetValue(input string, model []TokenTrain) (Extracted, bool) {
+func (n PROSE) GetValue(input string, model []TokenTrain) (Extracted, bool) {
 	if len(model) == 0 {
 		return Extracted{}, false
 	}
@@ -124,7 +124,7 @@ func (n NLPK) GetValue(input string, model []TokenTrain) (Extracted, bool) {
 	return n.GetValue(input, model[1:])
 }
 
-func (n NLPK) Learn(input []string) []TokenTrain {
+func (n PROSE) Learn(input []string) []TokenTrain {
 	tokens := []TokenTrain{}
 
 	for _, i := range input {
@@ -142,7 +142,7 @@ func (n NLPK) Learn(input []string) []TokenTrain {
 	return tokens
 }
 
-func (n NLPK) Save(tokens []TokenTrain, filename string) error {
+func (n PROSE) Save(tokens []TokenTrain, filename string) error {
 	// Abre o arquivo para escrita (ou cria se não existir)
 	file, err := os.Create(filename)
 	if err != nil {
@@ -162,7 +162,7 @@ func (n NLPK) Save(tokens []TokenTrain, filename string) error {
 }
 
 // Load carrega os tokens de um arquivo JSON
-func (n NLPK) Load(filename string) ([]TokenTrain, error) {
+func (n PROSE) Load(filename string) ([]TokenTrain, error) {
 	// Abre o arquivo para leitura
 	file, err := os.Open(filename)
 	if err != nil {
@@ -182,7 +182,7 @@ func (n NLPK) Load(filename string) ([]TokenTrain, error) {
 	return tokens, nil
 }
 
-func (n NLPK) ParseValueToStruct(input string, output interface{}, pathFile string) bool {
+func (n PROSE) ParseValueToStruct(input string, output interface{}, pathFile string) bool {
 	tagsToFields := make(map[string]string)
 	t := reflect.TypeOf(output).Elem()
 	tokens, _ := n.Load(pathFile)
