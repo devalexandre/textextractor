@@ -1,8 +1,9 @@
-package prose_test
+package textextractor_test
 
 import (
 	"fmt"
-	prose "github.com/devalexandre/prose/pkg"
+	textextractor "github.com/devalexandre/prose/pkg"
+
 	"os"
 	"reflect"
 	"testing"
@@ -10,7 +11,7 @@ import (
 
 func TestExtractTokens(t *testing.T) {
 	t.Run("extract tokens", func(t *testing.T) {
-		p := prose.NewPROSE()
+		p := textextractor.NewTextExtractor()
 		input := "Name 6: {Name}. Name (non-Latin script): {NameNonLatin}. DOB: {DOB}. POB: {POB} a.k.a: {GoodQualityAKA}  Other Information: {OtherInformation} Listed on: {Listed} UK Sanctions List Date Designated: 04/10/2011 Last Updated: 01/02/2021 Group ID: 12156."
 		want := []string{"Name", "NameNonLatin", "DOB", "POB", "GoodQualityAKA", "OtherInformation", "Listed"}
 		got := p.ExtractTokens(input)
@@ -23,7 +24,7 @@ func TestExtractTokens(t *testing.T) {
 func TestGetBeforeToken(t *testing.T) {
 
 	t.Run("get word before token", func(t *testing.T) {
-		p := prose.NewPROSE()
+		p := textextractor.NewTextExtractor()
 		input := "Name 6: {Name}. Brazil"
 		want := "e 6: "
 		token := p.ExtractTokens(input)[0]
@@ -37,7 +38,7 @@ func TestGetBeforeToken(t *testing.T) {
 func TestGetAfterToken(t *testing.T) {
 
 	t.Run("get word after token", func(t *testing.T) {
-		p := prose.NewPROSE()
+		p := textextractor.NewTextExtractor()
 		input := "Name 6: {Name}. Brazil"
 		want := ". Bra"
 		token := p.ExtractTokens(input)[0]
@@ -51,7 +52,7 @@ func TestGetAfterToken(t *testing.T) {
 func TestGetValueBetweenTokens(t *testing.T) {
 
 	t.Run("get value between tokens", func(t *testing.T) {
-		p := prose.NewPROSE()
+		p := textextractor.NewTextExtractor()
 		trainWord := `Name 6: {NAME}.
 		Name (non-Latin script): عبد العزيز عباسین
 		DOB: {DOB}`
@@ -70,7 +71,7 @@ func TestGetValueBetweenTokens(t *testing.T) {
 		for _, token := range token {
 			wordBefore := p.GetBeforeToken(trainWord, fmt.Sprintf("{%s}", token))
 			wordAfter := p.GetAfterToken(trainWord, fmt.Sprintf("{%s}", token))
-			train := prose.TokenTrain{
+			train := textextractor.TokenTrain{
 				Name:       token,
 				WordBefore: wordBefore,
 				WordAfter:  wordAfter,
@@ -89,7 +90,7 @@ func TestGetValueBetweenTokens(t *testing.T) {
 
 func TestParseValueToStruct(t *testing.T) {
 	t.Run("parse value to struct", func(t *testing.T) {
-		p := prose.NewPROSE()
+		p := textextractor.NewTextExtractor()
 		input := `Name 6: ABBASIN 1: ABDUL AZIZ 2: n/a 3: n/a 4: n/a 5: n/a.
 	Name (non-Latin script): عبد العزيز عباسین
 	DOB: --/--/1969`
@@ -123,7 +124,7 @@ func TestParseValueToStruct(t *testing.T) {
 
 func TestLearn(t *testing.T) {
 	t.Run("learn", func(t *testing.T) {
-		p := prose.NewPROSE()
+		p := textextractor.NewTextExtractor()
 		dataTrain := []string{
 			`Name 6: {NAME}.
 			Name (non-Latin script): عبد العزيز عباسین
@@ -147,7 +148,7 @@ func TestLearn(t *testing.T) {
 
 func TestSave(t *testing.T) {
 	t.Run("learn and save", func(t *testing.T) {
-		p := prose.NewPROSE()
+		p := textextractor.NewTextExtractor()
 		dataTrain := []string{
 			`Name 6: {NAME}.
 			Name (non-Latin script): عبد العزيز عباسین
@@ -184,7 +185,7 @@ func TestSave(t *testing.T) {
 // test Load
 func TestLoad(t *testing.T) {
 	t.Run("load", func(t *testing.T) {
-		p := prose.NewPROSE()
+		p := textextractor.NewTextExtractor()
 		model, err := p.Load("tokens.json")
 		if err != nil {
 			t.Errorf("got %v want %v", err, nil)

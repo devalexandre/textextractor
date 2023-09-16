@@ -2,14 +2,13 @@ package main
 
 import (
 	"fmt"
-
-	nlpk "github.com/devalexandre/nlpk/pkg"
+	textextractor "github.com/devalexandre/textextractor/pkg"
 )
 
 func main() {
-	ner := nlpk.NewNLPK()
+	p := textextractor.NewTextExtractor()
 	input := "Name 6: {Name}. DOB: {DOB}."
-	tokens := ner.ExtractTokens(input)
+	tokens := p.ExtractTokens(input)
 	fmt.Println("Extracted Tokens:", tokens)
 	//output: Extracted Tokens: [Name DOB]
 }

@@ -1,4 +1,4 @@
-module github.com/devalexandre/prose
+module github.com/devalexandre/textextractor
 
 go 1.20
 

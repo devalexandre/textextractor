@@ -1,14 +1,14 @@
-# Prose: Natural Language Processing Toolkit
+# TextExtractor: Text Data Extraction Toolkit
 
 ![Prose Logo](https://example.com/Prose-logo.png)
 
-Prose is a powerful toolkit for natural language processing tasks. It provides various functions to extract, manipulate, and analyze text data efficiently.
+TextExtractor is a versatile toolkit designed for efficient text data extraction tasks. It simplifies the process of extracting valuable information enclosed between tokens in a given input text.
 
-### Library's Token Extraction Algorithm
+### Simplified Text Extraction
 
-The `Prose` library employs a sophisticated algorithm to extract values enclosed between two tokens in a given input text. Here's a visual representation of how it works:
+TextExtractor streamlines text extraction using a straightforward approach. Consider this practical example
 
-**Example Input Text**: "My name is {NAME} and I'm a developer."
+**Example Input Text**: "Product: {PRODUCT_NAME}. Price: {PRICE} USD"
 
 **Extraction Process:**
 
@@ -25,9 +25,9 @@ Input Text: My name is {<------->} and I'm a developer.
 
 **Result:**
 
-- The value 'NAME' is extracted from the first token pair '{NAME}'.
+- The value 'PRODUCT_NAME' is extracted from the token pair '{PRODUCT_NAME}'.
+- The value 'PRICE' is extracted from the token pair '{PRICE}'.
 
-The `Prose` library repeats this process for each token pair in the input text, efficiently extracting values between tokens.
 
 
 ## Table of Contents
@@ -44,10 +44,10 @@ The `Prose` library repeats this process for each token pair in the input text, 
 
 ## Installation
 
-To use Prose, you need to import it into your Go project:
+To use TextExtractor in your Go project, simply import it using:
 
 ```shell
-go get github.com/devalexandre/Prose
+go get github.com/devalexandre/TextExtractor
 
 ```
 # Usage
@@ -59,7 +59,7 @@ go get github.com/devalexandre/Prose
 Extract tokens from a text.
 
 ```go
-p := prose.NewProse()
+p := textextractor.NewTextExtractor()
 input := "Name: {Name}. DOB: {DOB}. Country: {Country}"
 tokens := p.ExtractTokens(input)
 
@@ -73,7 +73,7 @@ tokens := p.ExtractTokens(input)
 Get the word before a specific token in a text.
 
 ```go
-p := prose.NewProse()
+p := textextractor.NewTextExtractor()
 input := "Name: John. Country: USA"
 token := "Name"
 wordBefore := p.GetBeforeToken(input, fmt.Sprintf("{%s}", token))
@@ -87,7 +87,7 @@ Similarly, you can get the word following a specific token in the text.
 📜 Function: GetAfterToken(input, token string) string
 
 ```go
-p := prose.NewProse()
+p := textextractor.NewTextExtractor()
 input := "Name: John. Country: USA"
 token := "Country"
 wordAfter := p.GetAfterToken(input, fmt.Sprintf("{%s}", token))
@@ -102,7 +102,7 @@ wordAfter := p.GetAfterToken(input, fmt.Sprintf("{%s}", token))
 Get the value between two tokens using a train configuration.
 
 ```go
-p := prose.NewProse()
+p := textextractor.NewTextExtractor()
 trainWord := "Name: {NAME}. DOB: {DOB}"
 tokens := p.ExtractTokens(trainWord)
 input := "Name: John. DOB: 01/01/1990"
@@ -135,7 +135,7 @@ for _, token := range tokens {
 Parse values from a text into a struct using struct tags.
 
 ```go
-p := prose.NewProse()
+p := textextractor.NewTextExtractor()
 input := "Name: John. DOB: 01/01/1990"
 
 type Person struct {
@@ -156,7 +156,7 @@ ok := p.ParseValueToStruct(input, &person, "tokens.json")
 Learn token patterns from a set of training data.
 
 ```go
-p := prose.NewProse()
+p := textextractor.NewTextExtractor()
 
 dataTrain := []string{
     "Name 6: {NAME}. DOB:{DOB}",
@@ -173,7 +173,7 @@ fmt.Println("Learned Tokens:", learnedTokens)
 Save learned tokens to a file and load them for future use.
 
 ```go
-p := prose.NewProse()
+p := textextractor.NewTextExtractor()
 
 learnedTokens := map[string]TokenTrain{
     "NAME": {Name: "NAME", WordBefore: " 6: ", WordAfter: ". DOB:"},
