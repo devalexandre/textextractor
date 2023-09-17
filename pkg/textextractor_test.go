@@ -3,7 +3,6 @@ package textextractor_test
 import (
 	"fmt"
 	textextractor "github.com/devalexandre/textextractor/pkg"
-
 	"os"
 	"reflect"
 	"testing"
@@ -21,16 +20,86 @@ func TestExtractTokens(t *testing.T) {
 	})
 }
 
+func TestNormalize(t *testing.T) {
+	t.Run("normalize", func(t *testing.T) {
+		var model []textextractor.TokenTrain
+		p := textextractor.NewTextExtractor()
+		input := "{NAME} {MIDNAME} de {LASTNAME}"
+		tokens := p.ExtractTokens(input)
+
+		for i, token := range tokens {
+			wordBefore := p.GetBeforeToken(input, fmt.Sprintf("{%s}", token))
+			wordAfter := p.GetAfterToken(input, fmt.Sprintf("{%s}", token))
+			train := textextractor.TokenTrain{
+				Name:       token,
+				WordBefore: wordBefore,
+				WordAfter:  wordAfter,
+				Order:      i,
+			}
+			model = append(model, train)
+		}
+
+		modelNormalized := p.Normalize(input, model)
+
+		if len(modelNormalized) < 3 {
+			t.Errorf("got %v want %v", len(modelNormalized), 3)
+		}
+
+		for _, token := range modelNormalized {
+
+			if token.Name == "{MIDNAME}" {
+				if token.WordBefore != "{NAME}" {
+					t.Errorf("got %v want %v", token.WordBefore, "{NAME}")
+				}
+
+				if token.WordAfter != "{LASTNAME}" {
+					t.Errorf("got %v want %v", token.WordAfter, "{LASTNAME}")
+				}
+			}
+		}
+	})
+}
+func TestGetTokenName(t *testing.T) {
+	t.Run("get token name", func(t *testing.T) {
+
+		p := textextractor.NewTextExtractor()
+		input := "{NAME} {MIDNAME} de {LASTNAME}"
+		partialTokenName := "AME} "
+		want := "{NAME}"
+		got := p.GetTokenNameBeforeToken(input, partialTokenName)
+		if got != want {
+			t.Errorf("got %v want %v", got, want)
+		}
+	})
+}
+
+func TestGetTokenNameAfterToken(t *testing.T) {
+	t.Run("get token name after token", func(t *testing.T) {
+
+		p := textextractor.NewTextExtractor()
+		input := "{NAME} {MIDNAME} {LASTNAME}"
+		partialTokenName := " {LAS"
+		want := "{LASTNAME}"
+		got := p.GetTokenNameAfterToken(input, partialTokenName)
+		if got != want {
+			t.Errorf("got %v want %v", got, want)
+		}
+	})
+}
+
 func TestGetBeforeToken(t *testing.T) {
 
 	t.Run("get word before token", func(t *testing.T) {
 		p := textextractor.NewTextExtractor()
-		input := "Name 6: {Name}. Brazil"
-		want := "e 6: "
-		token := p.ExtractTokens(input)[0]
-		got := p.GetBeforeToken(input, fmt.Sprintf("{%s}", token))
-		if got != want {
-			t.Errorf("got %v want %v", got, want)
+		input := "Name 6: {Name}. {COUNTRY}"
+		want := []string{"e 6: ", "{Name}"}
+		tokens := p.ExtractTokens(input)
+
+		for index, token := range tokens {
+			got := p.GetBeforeToken(input, fmt.Sprintf("{%s}", token))
+			if got != want[index] {
+				t.Errorf("got %v want %v", got, want[index])
+			}
 		}
 	})
 }

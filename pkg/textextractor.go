@@ -13,6 +13,8 @@ type TokenTrain struct {
 	Name       string
 	WordBefore string
 	WordAfter  string
+	Last       bool
+	Order      int
 }
 
 type Extracted struct {
@@ -50,21 +52,24 @@ func (n TextExtractor) GenerateRegex(tokens []string) []string {
 	return regex
 }
 
-// GetBeforeToken returns the 5 characters before the token in the input string.
+// GetBeforeToken retorna os 5 caracteres antes do token na string de entrada.
 func (n TextExtractor) GetBeforeToken(input string, token string) string {
-	// Define the regular expression to find the token and the 5 characters before it.
-	regex := regexp.MustCompile(`(.{5})` + regexp.QuoteMeta(token))
+	// Define a expressão regular para encontrar o token e os 5 caracteres antes dele.
+	regex := regexp.MustCompile(`(.{0,5})` + regexp.QuoteMeta(token))
 
-	// Find the first match in the input string.
+	// Encontra a primeira correspondência na string de entrada.
 	match := regex.FindStringSubmatch(input)
 
-	// If there is no match or the token is at the beginning of the string, return empty.
+	// Se não houver correspondência, retorna vazio.
 	if len(match) < 2 {
 		return ""
 	}
 
-	// Return the 5 characters before the token.
-	return match[1]
+	// Pega os 5 caracteres antes do token.
+	beforeToken := match[1] //  na string ... para tonken COUNTRY, r o beforeToken é "me}. "
+
+	// Se não houver chaves {} nos 5 caracteres antes do token, retorne esses caracteres.
+	return beforeToken
 }
 
 // GetAfterToken returns the 5 characters after the token in the input string.
@@ -82,6 +87,97 @@ func (n TextExtractor) GetAfterToken(input string, token string) string {
 
 	// Return the 5 characters after the token.
 	return match[1]
+}
+
+func (n TextExtractor) GetTokenNameBeforeToken(input string, partialTokenName string) string {
+	// Find the partialTokenName in the input string.
+	index := strings.Index(input, partialTokenName) + (len(partialTokenName))
+
+	// If the partialTokenName is not found or does not contain '}', return empty.
+	if index == -1 || !strings.Contains(partialTokenName, "}") {
+		return ""
+	}
+
+	// Find the '{' immediately before the partialTokenName.
+	openingBraceIndex := strings.LastIndex(input[:index], "{")
+	if openingBraceIndex == -1 {
+		return ""
+	}
+
+	value := input[openingBraceIndex:index] // "{Name}. "
+
+	// Extract everything between the curly braces {} and add it to the results.
+	re := regexp.MustCompile(`\{([^{}]+)\}`)
+	matches := re.FindStringSubmatch(value)
+	if len(matches) >= 2 {
+		return matches[0]
+	}
+
+	return ""
+}
+
+func (n TextExtractor) GetTokenNameAfterToken(input string, partialTokenName string) string {
+	// Find the partialTokenName in the input string.
+	index := strings.Index(input, partialTokenName) + len(partialTokenName)
+
+	// If the partialTokenName is not found or does not contain '{', return empty.
+	if index == -1 || !strings.Contains(partialTokenName, "{") {
+		return ""
+	}
+
+	// Find the '}' immediately after the partialTokenName.
+	closingBraceIndex := strings.Index(input[index:], "}")
+	if closingBraceIndex == -1 {
+		return ""
+	}
+
+	// Adjust the closing brace index to the correct position in the input string.
+	closingBraceIndex += index
+
+	// Find the '{' immediately before the partialTokenName.
+	openingBraceIndex := strings.LastIndex(input[:index], "{")
+	if openingBraceIndex == -1 {
+		return ""
+	}
+
+	value := input[openingBraceIndex : closingBraceIndex+1] // "{Name}"
+
+	// Extract everything between the curly braces {} and add it to the results.
+	re := regexp.MustCompile(`\{([^{}]+)\}`)
+	matches := re.FindStringSubmatch(value)
+	if len(matches) >= 2 {
+		return matches[0]
+	}
+
+	return ""
+}
+
+func (n TextExtractor) Normalize(input string, tokens []TokenTrain) []TokenTrain {
+
+	// Normalize the input string by replacing tokens with their names
+	var normalizedTrain []TokenTrain
+	for i, token := range tokens {
+		normalized := TokenTrain{}
+		normalized.Name = token.Name
+
+		if strings.Contains(token.WordBefore, "}") {
+			normalized.WordBefore = n.GetTokenNameBeforeToken(input, token.WordBefore)
+		}
+
+		if strings.Contains(token.WordAfter, "{") {
+			normalized.WordAfter = n.GetTokenNameAfterToken(input, token.WordAfter)
+		}
+
+		if strings.Contains(token.WordBefore, "}") || strings.Contains(token.WordAfter, "{") {
+			normalized.Last = true
+			normalized.Order = i
+		}
+
+		normalizedTrain = append(normalizedTrain, normalized)
+	}
+
+	return normalizedTrain
+
 }
 
 // GetValueBetweenTokens extracts the value between tokens using a regex pattern.
