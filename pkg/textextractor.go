@@ -27,11 +27,11 @@ func NewTextExtractor() *TextExtractor {
 	return &TextExtractor{}
 }
 
-// get tokens from input using {}
+// ExtractTokens extracts tokens from input using {}
 func (n TextExtractor) ExtractTokens(input string) []string {
 	tokens := []string{}
 
-	//use regex to extract tokens from input in {}
+	// Use regex to extract tokens from input in {}
 	regex := regexp.MustCompile(`\{([^\}]+)\}`)
 	for _, match := range regex.FindAllStringSubmatch(input, -1) {
 		tokens = append(tokens, match[1])
@@ -40,7 +40,7 @@ func (n TextExtractor) ExtractTokens(input string) []string {
 	return tokens
 }
 
-// get word before token and after token and create regex to get value between them
+// GenerateRegex generates regex patterns for tokens
 func (n TextExtractor) GenerateRegex(tokens []string) []string {
 	regex := []string{}
 	for _, token := range tokens {
@@ -50,40 +50,41 @@ func (n TextExtractor) GenerateRegex(tokens []string) []string {
 	return regex
 }
 
-// GetBeforeToken retorna os 5 caracteres antes do token na string de entrada.
+// GetBeforeToken returns the 5 characters before the token in the input string.
 func (n TextExtractor) GetBeforeToken(input string, token string) string {
-	// Define a expressão regular para encontrar o token e os 5 caracteres antes.
+	// Define the regular expression to find the token and the 5 characters before it.
 	regex := regexp.MustCompile(`(.{5})` + regexp.QuoteMeta(token))
 
-	// Encontra a primeira correspondência na string de entrada.
+	// Find the first match in the input string.
 	match := regex.FindStringSubmatch(input)
 
-	// Se não houver correspondência ou o token estiver no início da string, retorna vazio.
+	// If there is no match or the token is at the beginning of the string, return empty.
 	if len(match) < 2 {
 		return ""
 	}
 
-	// Retorna os 5 caracteres antes do token.
+	// Return the 5 characters before the token.
 	return match[1]
 }
 
-// GetAfterToken retorna os 5 caracteres após o token na string de entrada.
+// GetAfterToken returns the 5 characters after the token in the input string.
 func (n TextExtractor) GetAfterToken(input string, token string) string {
-	// Define a expressão regular para encontrar o token e os 5 caracteres após.
+	// Define the regular expression to find the token and the 5 characters after it.
 	regex := regexp.MustCompile(regexp.QuoteMeta(token) + `(.{5})`)
 
-	// Encontra a primeira correspondência na string de entrada.
+	// Find the first match in the input string.
 	match := regex.FindStringSubmatch(input)
 
-	// Se não houver correspondência ou o token estiver no final da string, retorna vazio.
+	// If there is no match or the token is at the end of the string, return empty.
 	if len(match) < 2 {
 		return ""
 	}
 
-	// Retorna os 5 caracteres após o token.
+	// Return the 5 characters after the token.
 	return match[1]
 }
 
+// GetValueBetweenTokens extracts the value between tokens using a regex pattern.
 func (n TextExtractor) GetValueBetweenTokens(input string, model TokenTrain) (Extracted, bool) {
 	var regex *regexp.Regexp
 	if len(model.WordAfter) == 0 {
@@ -103,12 +104,12 @@ func (n TextExtractor) GetValueBetweenTokens(input string, model TokenTrain) (Ex
 	var precision float64
 	if len(match) >= 2 {
 		result = match[1]
-		// Remove espaços em branco no início e no fim
+		// Remove leading and trailing spaces
 		result = strings.TrimSpace(result)
 
-		// Calcular a precisão com base na proporção de caracteres da palavra em relação ao contexto
-		contextLength := len(match[0]) // Comprimento do contexto entre os tokens
-		wordLength := len(result)      // Comprimento da palavra extraída
+		// Calculate precision based on the ratio of characters in the word to the context
+		contextLength := len(match[0]) // Length of context between the tokens
+		wordLength := len(result)      // Length of the extracted word
 		if contextLength > 0 {
 			precision = calculatePrecision(result, len(model.Name), wordLength, contextLength)
 		}
@@ -122,7 +123,7 @@ func (n TextExtractor) GetValueBetweenTokens(input string, model TokenTrain) (Ex
 	return Extracted{}, false
 }
 
-// get value using trained model, and if not found value tray next token using recursion
+// GetValue extracts values using a trained model, and if not found, it tries the next token using recursion.
 func (n TextExtractor) GetValue(input string, model []TokenTrain) (Extracted, bool) {
 	if len(model) == 0 {
 		return Extracted{}, false
@@ -134,36 +135,37 @@ func (n TextExtractor) GetValue(input string, model []TokenTrain) (Extracted, bo
 	return n.GetValue(input, model[1:])
 }
 
+// Learn generates token training data from input strings.
 func (n TextExtractor) Learn(input []string) []TokenTrain {
 	tokens := []TokenTrain{}
 
 	for _, i := range input {
 		t := TokenTrain{}
-		//can have more than one token in the same string
+		// Can have more than one token in the same string
 		for _, token := range n.ExtractTokens(i) {
 			t.Name = token
 			t.WordBefore = n.GetBeforeToken(i, fmt.Sprintf("{%s}", token))
 			t.WordAfter = n.GetAfterToken(i, fmt.Sprintf("{%s}", token))
 			tokens = append(tokens, t)
 		}
-
 	}
 
 	return tokens
 }
 
+// Save saves tokens to a .gob file.
 func (n TextExtractor) Save(tokens []TokenTrain, filename string) error {
-	// Abre o arquivo para escrita (ou cria se não existir)
+	// Open the file for writing (or create if it doesn't exist)
 	file, err := os.Create(filename)
 	if err != nil {
 		return err
 	}
 	defer file.Close()
 
-	// Cria um encoder Gob
+	// Create a Gob encoder
 	encoder := gob.NewEncoder(file)
 
-	// Codifica os tokens em Gob e escreve no arquivo
+	// Encode tokens into Gob and write to the file
 	if err := encoder.Encode(tokens); err != nil {
 		return err
 	}
@@ -171,18 +173,19 @@ func (n TextExtractor) Save(tokens []TokenTrain, filename string) error {
 	return nil
 }
 
+// Load loads tokens from a .gob file.
 func (n TextExtractor) Load(filename string) ([]TokenTrain, error) {
-	// Abre o arquivo para leitura
+	// Open the file for reading
 	file, err := os.Open(filename)
 	if err != nil {
 		return nil, err
 	}
 	defer file.Close()
 
-	// Cria um decoder Gob
+	// Create a Gob decoder
 	decoder := gob.NewDecoder(file)
 
-	// Decodifica o Gob para um slice de tokens
+	// Decode the Gob into a slice of tokens
 	tokens := []TokenTrain{}
 	if err := decoder.Decode(&tokens); err != nil {
 		return nil, err
@@ -191,12 +194,13 @@ func (n TextExtractor) Load(filename string) ([]TokenTrain, error) {
 	return tokens, nil
 }
 
+// ParseValueToStruct parses values from input and populates a struct based on data tags.
 func (n TextExtractor) ParseValueToStruct(input string, output interface{}, pathFile string) bool {
 	tagsToFields := make(map[string]string)
 	t := reflect.TypeOf(output).Elem()
 	tokens, _ := n.Load(pathFile)
 
-	// Mapear tags para campos
+	// Map tags to fields
 	for i := 0; i < t.NumField(); i++ {
 		field := t.Field(i)
 		tag := field.Tag.Get("data")
@@ -205,7 +209,7 @@ func (n TextExtractor) ParseValueToStruct(input string, output interface{}, path
 		}
 	}
 
-	valueMap := make(map[string]Extracted) // Altere para armazenar Extracted em vez de string
+	valueMap := make(map[string]Extracted) // Change to store Extracted instead of string
 
 	for _, token := range tokens {
 		train := TokenTrain{
@@ -215,20 +219,20 @@ func (n TextExtractor) ParseValueToStruct(input string, output interface{}, path
 		}
 		p, have := n.GetValueBetweenTokens(input, train)
 		if have {
-			// Verifique se a tag está mapeada para um campo na estrutura
+			// Check if the tag is mapped to a field in the structure
 			fieldName, tagExists := tagsToFields[p.Token]
 			if tagExists {
-				// Verifique se já existe um valor para a mesma chave
+				// Check if there is already a value for the same key
 				existingValue, found := valueMap[fieldName]
 				if !found || p.Precision < existingValue.Precision {
-					// Se não há valor existente ou a nova precisão é maior, atualize o mapa
+					// If there is no existing value or the new precision is higher, update the map
 					valueMap[fieldName] = p
 				}
 			}
 		}
 	}
 
-	// Preencha a estrutura de saída usando os valores do mapa
+	// Populate the output structure using the values from the map
 	outputValue := reflect.ValueOf(output).Elem()
 	for fieldName, extracted := range valueMap {
 		field := outputValue.FieldByName(fieldName)
@@ -240,21 +244,22 @@ func (n TextExtractor) ParseValueToStruct(input string, output interface{}, path
 	return true
 }
 
+// calculatePrecision calculates precision of the extracted value.
 func calculatePrecision(value string, tokenLength, characterCount, tokenCount int) float64 {
-	// Ajuste esses pesos de acordo com sua preferência
+	// Adjust these weights according to your preference
 	wordLengthWeight := 0.4
 	tokenLengthWeight := 0.3
 	characterCountWeight := 0.3
 
-	// Calcula a precisão com base nos pesos e nos valores fornecidos
+	// Calculate precision based on provided weights and values
 	wordLengthPrecision := float64(len(value)) / float64(wordLengthWeight)
 	tokenLengthPrecision := float64(tokenLength) / float64(tokenLengthWeight)
 	characterCountPrecision := float64(characterCount) / float64(characterCountWeight)
 
-	// Combine os valores de precisão ponderados
+	// Combine weighted precision values
 	totalPrecision := (wordLengthPrecision + tokenLengthPrecision + characterCountPrecision) / 3.0
 
-	// Converte a precisão em uma escala de 0 a 100
+	// Convert precision to a scale of 0 to 100
 	scaledPrecision := totalPrecision * 100.0
 
 	return scaledPrecision
