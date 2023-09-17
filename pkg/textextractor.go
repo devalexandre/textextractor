@@ -162,15 +162,25 @@ func (n TextExtractor) Normalize(input string, tokens []TokenTrain) []TokenTrain
 
 		if strings.Contains(token.WordBefore, "}") {
 			normalized.WordBefore = n.GetTokenNameBeforeToken(input, token.WordBefore)
+		} else {
+			normalized.WordBefore = token.WordBefore
 		}
 
 		if strings.Contains(token.WordAfter, "{") {
 			normalized.WordAfter = n.GetTokenNameAfterToken(input, token.WordAfter)
+		} else {
+			normalized.WordAfter = token.WordAfter
 		}
 
 		if strings.Contains(token.WordBefore, "}") || strings.Contains(token.WordAfter, "{") {
 			normalized.Last = true
 			normalized.Order = i
+		}
+
+		if normalized.WordAfter == "" && strings.Contains(token.WordBefore, "{") {
+			normalized.Last = true
+			normalized.Order = 0
+			normalizedTrain[0].Order = i
 		}
 
 		normalizedTrain = append(normalizedTrain, normalized)
@@ -252,7 +262,7 @@ func (n TextExtractor) Learn(input []string) []TokenTrain {
 // Save saves tokens to a .gob file.
 func (n TextExtractor) Save(tokens []TokenTrain, filename string) error {
 	// Open the file for writing (or create if it doesn't exist)
-	file, err := os.Create(filename)
+	file, err := os.Create(fmt.Sprintf("%s.gob", filename))
 	if err != nil {
 		return err
 	}
@@ -272,7 +282,7 @@ func (n TextExtractor) Save(tokens []TokenTrain, filename string) error {
 // Load loads tokens from a .gob file.
 func (n TextExtractor) Load(filename string) ([]TokenTrain, error) {
 	// Open the file for reading
-	file, err := os.Open(filename)
+	file, err := os.Open(fmt.Sprintf("%s.gob", filename))
 	if err != nil {
 		return nil, err
 	}

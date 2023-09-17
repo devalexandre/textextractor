@@ -16,7 +16,7 @@ func main() {
 	}
 
 	entity := Entity{}
-	ok := p.ParseValueToStruct(input, &entity, "model.json")
+	ok := p.ParseValueToStruct(input, &entity, "model")
 	if !ok {
 		panic("error")
 	}

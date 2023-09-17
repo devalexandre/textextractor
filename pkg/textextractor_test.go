@@ -24,7 +24,7 @@ func TestNormalize(t *testing.T) {
 	t.Run("normalize", func(t *testing.T) {
 		var model []textextractor.TokenTrain
 		p := textextractor.NewTextExtractor()
-		input := "{NAME} {MIDNAME} de {LASTNAME}"
+		input := "Name 6: {Name}. {COUNTRY}"
 		tokens := p.ExtractTokens(input)
 
 		for i, token := range tokens {
@@ -92,7 +92,7 @@ func TestGetBeforeToken(t *testing.T) {
 	t.Run("get word before token", func(t *testing.T) {
 		p := textextractor.NewTextExtractor()
 		input := "Name 6: {Name}. {COUNTRY}"
-		want := []string{"e 6: ", "{Name}"}
+		want := []string{"e 6: ", "me}. "}
 		tokens := p.ExtractTokens(input)
 
 		for index, token := range tokens {

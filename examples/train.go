@@ -22,7 +22,7 @@ func extractAndSave() {
 		panic("error")
 	}
 
-	p.Save(tk, "model.json")
+	p.Save(tk, "model")
 
 	fmt.Println("Tokens", tk)
 }
