@@ -4,6 +4,7 @@ import (
 	"encoding/gob"
 	"fmt"
 	"os"
+	"path/filepath"
 	"reflect"
 	"regexp"
 	"strings"
@@ -21,10 +22,14 @@ type Extracted struct {
 	Precision float64
 }
 
-type TextExtractor struct{}
+type TextExtractor struct {
+	ModelsDir string
+}
 
 func NewTextExtractor() *TextExtractor {
-	return &TextExtractor{}
+	return &TextExtractor{
+		ModelsDir: "models",
+	}
 }
 
 // ExtractTokens extracts tokens from input using {}
@@ -153,19 +158,33 @@ func (n TextExtractor) Learn(input []string) []TokenTrain {
 	return tokens
 }
 
-// Save saves tokens to a .gob file.
+// Save salva os tokens em um arquivo .gob na pasta "models".
 func (n TextExtractor) Save(tokens []TokenTrain, filename string) error {
-	// Open the file for writing (or create if it doesn't exist)
-	file, err := os.Create(filename)
+	// Determine o caminho absoluto para o diretório "models" na raiz do projeto.
+	dir, err := n.GetModelsDir()
+	if err != nil {
+		return err
+	}
+
+	// Garanta que o diretório "models" exista; crie-o se não existir.
+	if err := os.MkdirAll(dir, os.ModePerm); err != nil {
+		return err
+	}
+
+	// Crie o caminho completo do arquivo no diretório "models".
+	filePath := filepath.Join(dir, fmt.Sprintf("%s.gob", filename))
+
+	// Abra o arquivo para escrita (ou crie se não existir).
+	file, err := os.Create(filePath)
 	if err != nil {
 		return err
 	}
 	defer file.Close()
 
-	// Create a Gob encoder
+	// Crie um codificador Gob.
 	encoder := gob.NewEncoder(file)
 
-	// Encode tokens into Gob and write to the file
+	// Codifique os tokens em Gob e escreva no arquivo.
 	if err := encoder.Encode(tokens); err != nil {
 		return err
 	}
@@ -173,19 +192,28 @@ func (n TextExtractor) Save(tokens []TokenTrain, filename string) error {
 	return nil
 }
 
-// Load loads tokens from a .gob file.
+// Load carrega tokens de um arquivo .gob na pasta "models".
 func (n TextExtractor) Load(filename string) ([]TokenTrain, error) {
-	// Open the file for reading
-	file, err := os.Open(filename)
+	// Determine o caminho absoluto para o diretório "models" na raiz do projeto.
+	modelsDir, err := n.GetModelsDir()
+	if err != nil {
+		return nil, err
+	}
+
+	// Crie o caminho completo do arquivo no diretório "models".
+	filePath := filepath.Join(modelsDir, fmt.Sprintf("%s.gob", filename))
+
+	// Abra o arquivo para leitura.
+	file, err := os.Open(filePath)
 	if err != nil {
 		return nil, err
 	}
 	defer file.Close()
 
-	// Create a Gob decoder
+	// Crie um decodificador Gob.
 	decoder := gob.NewDecoder(file)
 
-	// Decode the Gob into a slice of tokens
+	// Decodifique o Gob em uma fatia de tokens.
 	tokens := []TokenTrain{}
 	if err := decoder.Decode(&tokens); err != nil {
 		return nil, err
@@ -195,10 +223,14 @@ func (n TextExtractor) Load(filename string) ([]TokenTrain, error) {
 }
 
 // ParseValueToStruct parses values from input and populates a struct based on data tags.
-func (n TextExtractor) ParseValueToStruct(input string, output interface{}, pathFile string) bool {
+func (n TextExtractor) ParseValueToStruct(input string, output interface{}, pathFile string) error {
 	tagsToFields := make(map[string]string)
 	t := reflect.TypeOf(output).Elem()
-	tokens, _ := n.Load(pathFile)
+	tokens, errLoad := n.Load(pathFile)
+
+	if errLoad != nil {
+		return errLoad
+	}
 
 	// Map tags to fields
 	for i := 0; i < t.NumField(); i++ {
@@ -241,7 +273,7 @@ func (n TextExtractor) ParseValueToStruct(input string, output interface{}, path
 		}
 	}
 
-	return true
+	return nil
 }
 
 // calculatePrecision calculates precision of the extracted value.
@@ -263,4 +295,9 @@ func calculatePrecision(value string, tokenLength, characterCount, tokenCount in
 	scaledPrecision := totalPrecision * 100.0
 
 	return scaledPrecision
+}
+
+// GetModelsDir retorna o caminho absoluto para o diretório "models" na raiz do projeto.
+func (n TextExtractor) GetModelsDir() (string, error) {
+	return filepath.Abs(n.ModelsDir)
 }

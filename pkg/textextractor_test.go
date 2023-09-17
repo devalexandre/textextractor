@@ -91,13 +91,11 @@ func TestGetValueBetweenTokens(t *testing.T) {
 func TestParseValueToStruct(t *testing.T) {
 	t.Run("parse value to struct", func(t *testing.T) {
 		p := textextractor.NewTextExtractor()
-		input := `Name 6: ABBASIN 1: ABDUL AZIZ 2: n/a 3: n/a 4: n/a 5: n/a.
-	Name (non-Latin script): عبد العزيز عباسین
-	DOB: --/--/1969`
+		input := "Name 6: ABBASIN 1: ABDUL AZIZ 2: n/a 3: n/a 4: n/a 5: n/a.\nName (non-Latin script): عبد العزيز عباسین\nDOB: --/--/1969. POB: Sheykhan Village, Pirkowti Area, Orgun District, Paktika Province, Afghanistan Good quality a.k.a: MAHSUD, Abdul Aziz  Other Information: (UK Sanctions List Ref):AFG0121. (UN Ref):TAi.155. Key commander in the Haqqani Network (TAe.012) under Sirajuddin Jallaloudine Haqqani (TAi.144). Taliban Shadow Governor for Orgun District, Paktika Province as of early 2010. Operated a training camp for nonAfghan fighters in Paktika Province. Has been involved in the transport of weapons to Afghanistan. INTERPOLUN Security Council Special Notice web link: https://www.interpol.int/en/How-we-work/Notices/View-UN-NoticesIndividuals click here Listed on: 21/10/2011 UK Sanctions List Date Designated: 04/10/2011 Last Updated: 01/02/2021 Group ID: 12156."
 
 		want := map[string]string{
 			"NAME": "ABBASIN 1: ABDUL AZIZ 2: n/a 3: n/a 4: n/a 5: n/a.",
-			"DOB":  "",
+			"DOB":  "--/--/1969",
 		}
 
 		type Person struct {
@@ -105,10 +103,10 @@ func TestParseValueToStruct(t *testing.T) {
 			DOB  string `data:"DOB"`
 		}
 		person := Person{}
-		ok := p.ParseValueToStruct(input, &person, "tokens.gob")
+		err := p.ParseValueToStruct(input, &person, "tokens")
 
-		if !ok {
-			t.Errorf("got %v want %v", ok, true)
+		if err != nil {
+			t.Errorf("got %v want %v", err, true)
 		}
 
 		if person.Name != want["NAME"] {
@@ -167,7 +165,7 @@ func TestSave(t *testing.T) {
 			t.Errorf("got %v want %v", len(ln), 10)
 		}
 
-		err := p.Save(ln, "tokens.gob")
+		err := p.Save(ln, "tokens")
 		if err != nil {
 			t.Errorf("got %v want %v", err, nil)
 		}
@@ -186,7 +184,7 @@ func TestSave(t *testing.T) {
 func TestLoad(t *testing.T) {
 	t.Run("load", func(t *testing.T) {
 		p := textextractor.NewTextExtractor()
-		model, err := p.Load("tokens.gob")
+		model, err := p.Load("tokens")
 		if err != nil {
 			t.Errorf("got %v want %v", err, nil)
 		}
