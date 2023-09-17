@@ -1,7 +1,7 @@
 package textextractor
 
 import (
-	"encoding/json"
+	"encoding/gob"
 	"fmt"
 	"os"
 	"reflect"
@@ -16,8 +16,9 @@ type TokenTrain struct {
 }
 
 type Extracted struct {
-	Token string
-	Value string
+	Token     string
+	Value     string
+	Precision float64
 }
 
 type TextExtractor struct{}
@@ -83,7 +84,6 @@ func (n TextExtractor) GetAfterToken(input string, token string) string {
 	return match[1]
 }
 
-// get value between word before and word after
 func (n TextExtractor) GetValueBetweenTokens(input string, model TokenTrain) (Extracted, bool) {
 	var regex *regexp.Regexp
 	if len(model.WordAfter) == 0 {
@@ -100,13 +100,23 @@ func (n TextExtractor) GetValueBetweenTokens(input string, model TokenTrain) (Ex
 
 	match := regex.FindStringSubmatch(input)
 	var result string
+	var precision float64
 	if len(match) >= 2 {
 		result = match[1]
-		//remove espaço no inicio e no fim
+		// Remove espaços em branco no início e no fim
 		result = strings.TrimSpace(result)
+
+		// Calcular a precisão com base na proporção de caracteres da palavra em relação ao contexto
+		contextLength := len(match[0]) // Comprimento do contexto entre os tokens
+		wordLength := len(result)      // Comprimento da palavra extraída
+		if contextLength > 0 {
+			precision = calculatePrecision(result, len(model.Name), wordLength, contextLength)
+		}
+
 		return Extracted{
-			Token: model.Name,
-			Value: result,
+			Token:     model.Name,
+			Value:     result,
+			Precision: precision,
 		}, true
 	}
 	return Extracted{}, false
@@ -150,10 +160,10 @@ func (n TextExtractor) Save(tokens []TokenTrain, filename string) error {
 	}
 	defer file.Close()
 
-	// Cria um encoder JSON
-	encoder := json.NewEncoder(file)
+	// Cria um encoder Gob
+	encoder := gob.NewEncoder(file)
 
-	// Codifica os tokens em JSON e escreve no arquivo
+	// Codifica os tokens em Gob e escreve no arquivo
 	if err := encoder.Encode(tokens); err != nil {
 		return err
 	}
@@ -161,7 +171,6 @@ func (n TextExtractor) Save(tokens []TokenTrain, filename string) error {
 	return nil
 }
 
-// Load carrega os tokens de um arquivo JSON
 func (n TextExtractor) Load(filename string) ([]TokenTrain, error) {
 	// Abre o arquivo para leitura
 	file, err := os.Open(filename)
@@ -170,10 +179,10 @@ func (n TextExtractor) Load(filename string) ([]TokenTrain, error) {
 	}
 	defer file.Close()
 
-	// Cria um decoder JSON
-	decoder := json.NewDecoder(file)
+	// Cria um decoder Gob
+	decoder := gob.NewDecoder(file)
 
-	// Decodifica o JSON para um slice de tokens
+	// Decodifica o Gob para um slice de tokens
 	tokens := []TokenTrain{}
 	if err := decoder.Decode(&tokens); err != nil {
 		return nil, err
@@ -196,7 +205,7 @@ func (n TextExtractor) ParseValueToStruct(input string, output interface{}, path
 		}
 	}
 
-	valueMap := make(map[string]string)
+	valueMap := make(map[string]Extracted) // Altere para armazenar Extracted em vez de string
 
 	for _, token := range tokens {
 		train := TokenTrain{
@@ -209,20 +218,44 @@ func (n TextExtractor) ParseValueToStruct(input string, output interface{}, path
 			// Verifique se a tag está mapeada para um campo na estrutura
 			fieldName, tagExists := tagsToFields[p.Token]
 			if tagExists {
-				// Preencha o mapa temporário com os valores extraídos
-				valueMap[fieldName] = p.Value
+				// Verifique se já existe um valor para a mesma chave
+				existingValue, found := valueMap[fieldName]
+				if !found || p.Precision < existingValue.Precision {
+					// Se não há valor existente ou a nova precisão é maior, atualize o mapa
+					valueMap[fieldName] = p
+				}
 			}
 		}
 	}
 
 	// Preencha a estrutura de saída usando os valores do mapa
 	outputValue := reflect.ValueOf(output).Elem()
-	for fieldName, value := range valueMap {
+	for fieldName, extracted := range valueMap {
 		field := outputValue.FieldByName(fieldName)
 		if field.IsValid() && field.CanSet() {
-			field.SetString(value)
+			field.SetString(extracted.Value)
 		}
 	}
 
 	return true
+}
+
+func calculatePrecision(value string, tokenLength, characterCount, tokenCount int) float64 {
+	// Ajuste esses pesos de acordo com sua preferência
+	wordLengthWeight := 0.4
+	tokenLengthWeight := 0.3
+	characterCountWeight := 0.3
+
+	// Calcula a precisão com base nos pesos e nos valores fornecidos
+	wordLengthPrecision := float64(len(value)) / float64(wordLengthWeight)
+	tokenLengthPrecision := float64(tokenLength) / float64(tokenLengthWeight)
+	characterCountPrecision := float64(characterCount) / float64(characterCountWeight)
+
+	// Combine os valores de precisão ponderados
+	totalPrecision := (wordLengthPrecision + tokenLengthPrecision + characterCountPrecision) / 3.0
+
+	// Converte a precisão em uma escala de 0 a 100
+	scaledPrecision := totalPrecision * 100.0
+
+	return scaledPrecision
 }

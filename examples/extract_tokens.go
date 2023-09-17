@@ -5,7 +5,7 @@ import (
 	textextractor "github.com/devalexandre/textextractor/pkg"
 )
 
-func main() {
+func extract() {
 	p := textextractor.NewTextExtractor()
 	input := "Name 6: {Name}. DOB: {DOB}."
 	tokens := p.ExtractTokens(input)

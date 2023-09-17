@@ -2,7 +2,7 @@ package textextractor_test
 
 import (
 	"fmt"
-	textextractor "github.com/devalexandre/prose/pkg"
+	textextractor "github.com/devalexandre/textextractor/pkg"
 
 	"os"
 	"reflect"
@@ -105,7 +105,7 @@ func TestParseValueToStruct(t *testing.T) {
 			DOB  string `data:"DOB"`
 		}
 		person := Person{}
-		ok := p.ParseValueToStruct(input, &person, "tokens.json")
+		ok := p.ParseValueToStruct(input, &person, "tokens.gob")
 
 		if !ok {
 			t.Errorf("got %v want %v", ok, true)
@@ -167,13 +167,13 @@ func TestSave(t *testing.T) {
 			t.Errorf("got %v want %v", len(ln), 10)
 		}
 
-		err := p.Save(ln, "tokens.json")
+		err := p.Save(ln, "tokens.gob")
 		if err != nil {
 			t.Errorf("got %v want %v", err, nil)
 		}
 
 		//verify if file exists
-		_, err = os.Stat("tokens.json")
+		_, err = os.Stat("tokens.gob")
 		if err != nil {
 			t.Errorf("got %v want %v", err, nil)
 		}
@@ -186,7 +186,7 @@ func TestSave(t *testing.T) {
 func TestLoad(t *testing.T) {
 	t.Run("load", func(t *testing.T) {
 		p := textextractor.NewTextExtractor()
-		model, err := p.Load("tokens.json")
+		model, err := p.Load("tokens.gob")
 		if err != nil {
 			t.Errorf("got %v want %v", err, nil)
 		}
