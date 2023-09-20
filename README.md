@@ -1,193 +1,78 @@
-# TextExtractor: Text Data Extraction Toolkit
+Claro, aqui está o README do TextExtractor em formato Markdown:
 
-![Prose Logo](https://example.com/Prose-logo.png)
+markdown
 
-TextExtractor is a versatile toolkit designed for efficient text data extraction tasks. It simplifies the process of extracting valuable information enclosed between tokens in a given input text.
+# TextExtractor
 
-### Simplified Text Extraction
+The `TextExtractor` is a Go package that provides a set of tools for extracting and manipulating text based on specified patterns. It can be particularly useful for tokenizing and extracting structured data from unstructured text.
 
-TextExtractor streamlines text extraction using a straightforward approach. Consider this practical example
+## Features
 
-**Example Input Text**: "Product: {PRODUCT_NAME}. Price: {PRICE} USD"
-
-**Extraction Process:**
-
-```
-Input Text: My name is {<------->} and I'm a developer.
-```
-
-1. The library searches for the first token marker '{' and '}' pair in the input text.
-2. Once the opening '{' is found, the algorithm starts reading characters to find the value inside the token.
-3. The library identifies the closing '}' of the first token.
-4. The extracted value 'NAME' is stored for later use.
-5. The algorithm continues searching for the next token.
-6. If additional tokens are present, the process repeats to extract their values.
-
-**Result:**
-
-- The value 'PRODUCT_NAME' is extracted from the token pair '{PRODUCT_NAME}'.
-- The value 'PRICE' is extracted from the token pair '{PRICE}'.
-
-
-
-## Table of Contents
-
-- [Installation](#installation)
-- [Usage](#usage)
-  - [Extract Tokens](#extract-tokens)
-  - [Get Word Before Token](#get-word-before-token)
-  - [Get Word After Token](#get-word-after-token)
-  - [Get Value Between Tokens](#get-value-between-tokens)
-  - [Parse Value to Struct](#parse-value-to-struct)
-  - [Learn from Training Data](#learn-from-training-data)
-  - [Save and Load Tokens](#save-and-load-tokens)
+- **Token Extraction**: Easily extract tokens from text enclosed within curly braces `{}`.
+- **Regex Generation**: Generate regular expressions from extracted tokens for pattern matching.
+- **Contextual Extraction**: Extract text that appears before or after a specified token.
+- **Value Extraction**: Extract values using trained models with before and after tokens.
+- **Data Mapping**: Map extracted values to struct fields based on data tags.
+- **Precision Calculation**: Calculate precision scores for extracted values.
+- **Model Persistence**: Save and load token training data for reuse.
 
 ## Installation
 
-To use TextExtractor in your Go project, simply import it using:
+To use the `TextExtractor` package in your Go project, you can install it using `go get`:
 
-```shell
-go get github.com/devalexandre/TextExtractor
+```bash
+go get github.com/your-username/textextractor
 
-```
-# Usage
+Usage
 
-## Extract Tokens
+Here's an example of how to use the TextExtractor:
 
-📜 Function: ExtractTokens(input string) []string
+go
 
-Extract tokens from a text.
+package main
 
-```go
-p := textextractor.NewTextExtractor()
-input := "Name: {Name}. DOB: {DOB}. Country: {Country}"
-tokens := p.ExtractTokens(input)
+import (
+	"fmt"
+	"github.com/your-username/textextractor"
+)
 
-// Result: tokens = ["Name", "DOB", "Country"]
-```
+func main() {
+	// Create a new TextExtractor instance
+	extractor := textextractor.NewTextExtractor()
 
-## Get Word Before Token
+	// Define a text input with tokens
+	input := "Hello, {Name}! Your email is {Email}."
 
-📜 Function: GetBeforeToken(input, token string) string
+	// Extract tokens from the input
+	tokens := extractor.ExtractTokens(input)
 
-Get the word before a specific token in a text.
+	// Generate regular expressions for the tokens
+	regexPatterns := extractor.GenerateRegex(tokens)
 
-```go
-p := textextractor.NewTextExtractor()
-input := "Name: John. Country: USA"
-token := "Name"
-wordBefore := p.GetBeforeToken(input, fmt.Sprintf("{%s}", token))
-
-// Result: wordBefore = ""
-```
-## Get Word After Token
-
-Similarly, you can get the word following a specific token in the text.
-
-📜 Function: GetAfterToken(input, token string) string
-
-```go
-p := textextractor.NewTextExtractor()
-input := "Name: John. Country: USA"
-token := "Country"
-wordAfter := p.GetAfterToken(input, fmt.Sprintf("{%s}", token))
-
-// Result: wordAfter = ": USA"
-```
-
-## Get Value Between Tokens
-
-📜 Function: GetValueBetweenTokens(input string, train TokenTrain) (ParsedValue, bool)
-
-Get the value between two tokens using a train configuration.
-
-```go
-p := textextractor.NewTextExtractor()
-trainWord := "Name: {NAME}. DOB: {DOB}"
-tokens := p.ExtractTokens(trainWord)
-input := "Name: John. DOB: 01/01/1990"
-
-values := make(map[string]string)
-
-for _, token := range tokens {
-	wordBefore := p.GetBeforeToken(trainWord, fmt.Sprintf("{%s}", token))
-	wordAfter := p.GetAfterToken(trainWord, fmt.Sprintf("{%s}", token))
-	train := p.TokenTrain{
-		Name:       token,
-		WordBefore: wordBefore,
-		WordAfter:  wordAfter,
-	}
-	value, found := p.GetValueBetweenTokens(input, train)
-
-	if found {
-		values[token] = value
-	}
+	fmt.Println("Tokens:", tokens)
+	fmt.Println("Regex Patterns:", regexPatterns)
 }
 
-// Result: values = {"NAME": "John", "DOB": "01/01/1990"}
+Documentation
 
-```
+For detailed documentation and examples, please refer to the GoDoc page.
+License
 
-## Parse Value to Struct
+This project is licensed under the MIT License - see the LICENSE file for details.
+Contributing
 
-📜 Function: ParseValueToStruct(input string, output interface{}) bool
+We welcome contributions! If you'd like to contribute to the project or report issues, please check out the contribution guidelines.
+Author
 
-Parse values from a text into a struct using struct tags.
+    Your Name
+    GitHub: your-username
 
-```go
-p := textextractor.NewTextExtractor()
-input := "Name: John. DOB: 01/01/1990"
+Acknowledgments
 
-type Person struct {
-	Name string `data:"NAME"`
-	DOB  string `data:"DOB"`
-}
-person := Person{}
-ok := p.ParseValueToStruct(input, &person, "tokens.json")
+    Thanks to the Go community for inspiration and support.
 
-// Result: person = {Name: "John", DOB: "01/01/1990"}
+javascript
 
-```
 
-## Learn from Training Data
+Certifique-se de substituir `your-username` pelo seu nome de usuário do GitHub e personalizar o README conforme necessário para o seu projeto. Este README fornece uma visão geral do pacote `TextExtractor`, como usá-lo e informações sobre licenciamento e contribuições.
 
-📜 Function: Learn(dataTrain []string) map[string]TokenTrain
-
-Learn token patterns from a set of training data.
-
-```go
-p := textextractor.NewTextExtractor()
-
-dataTrain := []string{
-    "Name 6: {NAME}. DOB:{DOB}",
-    "Title: {TITLE} DOB: {DOB}",
-}
-learnedTokens := p.Learn(dataTrain)
-fmt.Println("Learned Tokens:", learnedTokens)
-```
-
-## Save and Load Tokens
-
-📜 Functions: Save(tokens map[string]TokenTrain, filename string) error, Load(filename string) (map[string]TokenTrain, error)
-
-Save learned tokens to a file and load them for future use.
-
-```go
-p := textextractor.NewTextExtractor()
-
-learnedTokens := map[string]TokenTrain{
-    "NAME": {Name: "NAME", WordBefore: " 6: ", WordAfter: ". DOB:"},
-    "DOB":  {Name: "DOB", WordBefore: "Title: ", WordAfter: ""},
-}
-err := p.Save(learnedTokens, "tokens.json")
-if err != nil {
-    fmt.Println("Error saving tokens:", err)
-}
-
-loadedTokens, err := p.Load("tokens.json")
-if err != nil {
-    fmt.Println("Error loading tokens:", err)
-} else {
-    fmt.Println("Loaded Tokens:", loadedTokens)
-}
-```
