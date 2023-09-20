@@ -52,27 +52,5 @@ func main() {
 	fmt.Println("Tokens:", tokens)
 	fmt.Println("Regex Patterns:", regexPatterns)
 }
-
-Documentation
-
-For detailed documentation and examples, please refer to the GoDoc page.
-License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
-Contributing
-
-We welcome contributions! If you'd like to contribute to the project or report issues, please check out the contribution guidelines.
-Author
-
-    Your Name
-    GitHub: your-username
-
-Acknowledgments
-
-    Thanks to the Go community for inspiration and support.
-
-javascript
-
-
-Certifique-se de substituir `your-username` pelo seu nome de usuário do GitHub e personalizar o README conforme necessário para o seu projeto. Este README fornece uma visão geral do pacote `TextExtractor`, como usá-lo e informações sobre licenciamento e contribuições.
+```
 
