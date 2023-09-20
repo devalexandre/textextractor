@@ -24,11 +24,13 @@ type Extracted struct {
 
 type TextExtractor struct {
 	ModelsDir string
+	Precision int
 }
 
 func NewTextExtractor() *TextExtractor {
 	return &TextExtractor{
 		ModelsDir: "models",
+		Precision: 5,
 	}
 }
 
@@ -58,7 +60,8 @@ func (n TextExtractor) GenerateRegex(tokens []string) []string {
 // GetBeforeToken returns the 5 characters before the token in the input string.
 func (n TextExtractor) GetBeforeToken(input string, token string) string {
 	// Define the regular expression to find the token and the 5 characters before it.
-	regex := regexp.MustCompile(`(.{5})` + regexp.QuoteMeta(token))
+	regexValue := fmt.Sprintf(`(.{%v})%s`, n.Precision, regexp.QuoteMeta(token))
+	regex := regexp.MustCompile(regexValue)
 
 	// Find the first match in the input string.
 	match := regex.FindStringSubmatch(input)
@@ -75,7 +78,8 @@ func (n TextExtractor) GetBeforeToken(input string, token string) string {
 // GetAfterToken returns the 5 characters after the token in the input string.
 func (n TextExtractor) GetAfterToken(input string, token string) string {
 	// Define the regular expression to find the token and the 5 characters after it.
-	regex := regexp.MustCompile(regexp.QuoteMeta(token) + `(.{5})`)
+	regexValue := fmt.Sprintf(`%s(.{%v})`, regexp.QuoteMeta(token), n.Precision)
+	regex := regexp.MustCompile(regexValue)
 
 	// Find the first match in the input string.
 	match := regex.FindStringSubmatch(input)
@@ -92,16 +96,19 @@ func (n TextExtractor) GetAfterToken(input string, token string) string {
 // GetValueBetweenTokens extracts the value between tokens using a regex pattern.
 func (n TextExtractor) GetValueBetweenTokens(input string, model TokenTrain) (Extracted, bool) {
 	var regex *regexp.Regexp
+	escapedWordBefore := regexp.QuoteMeta(model.WordBefore)
+	escapedWordAfter := regexp.QuoteMeta(model.WordAfter)
+
 	if len(model.WordAfter) == 0 {
-		regex = regexp.MustCompile(model.WordBefore + `(.+)`)
+		regex = regexp.MustCompile(escapedWordBefore + `(.+)`)
 	}
 
 	if len(model.WordBefore) == 0 {
-		regex = regexp.MustCompile(`(.+)` + model.WordAfter)
+		regex = regexp.MustCompile(`(.+)` + escapedWordAfter)
 	}
 
-	if len(model.WordAfter) > 0 && len(model.WordBefore) > 0 {
-		regex = regexp.MustCompile(model.WordBefore + `(.+?)` + model.WordAfter)
+	if len(escapedWordBefore) > 0 && len(escapedWordAfter) > 0 {
+		regex = regexp.MustCompile(escapedWordBefore + `(.+?)` + escapedWordAfter)
 	}
 
 	match := regex.FindStringSubmatch(input)
@@ -158,33 +165,33 @@ func (n TextExtractor) Learn(input []string) []TokenTrain {
 	return tokens
 }
 
-// Save salva os tokens em um arquivo .gob na pasta "models".
+// Save saves tokens to a .gob file in the "models" folder.
 func (n TextExtractor) Save(tokens []TokenTrain, filename string) error {
-	// Determine o caminho absoluto para o diretório "models" na raiz do projeto.
+	// Determine the absolute path to the "models" directory at the project's root.
 	dir, err := n.GetModelsDir()
 	if err != nil {
 		return err
 	}
 
-	// Garanta que o diretório "models" exista; crie-o se não existir.
+	// Ensure that the "models" directory exists; create it if it doesn't.
 	if err := os.MkdirAll(dir, os.ModePerm); err != nil {
 		return err
 	}
 
-	// Crie o caminho completo do arquivo no diretório "models".
+	// Create the full file path within the "models" directory.
 	filePath := filepath.Join(dir, fmt.Sprintf("%s.gob", filename))
 
-	// Abra o arquivo para escrita (ou crie se não existir).
+	// Open the file for writing (or create it if it doesn't exist).
 	file, err := os.Create(filePath)
 	if err != nil {
 		return err
 	}
 	defer file.Close()
 
-	// Crie um codificador Gob.
+	// Create a Gob encoder.
 	encoder := gob.NewEncoder(file)
 
-	// Codifique os tokens em Gob e escreva no arquivo.
+	// Encode the tokens into Gob and write to the file.
 	if err := encoder.Encode(tokens); err != nil {
 		return err
 	}
@@ -192,28 +199,28 @@ func (n TextExtractor) Save(tokens []TokenTrain, filename string) error {
 	return nil
 }
 
-// Load carrega tokens de um arquivo .gob na pasta "models".
+// Load loads tokens from a .gob file in the "models" folder.
 func (n TextExtractor) Load(filename string) ([]TokenTrain, error) {
-	// Determine o caminho absoluto para o diretório "models" na raiz do projeto.
+	// Determine the absolute path to the "models" directory at the project's root.
 	modelsDir, err := n.GetModelsDir()
 	if err != nil {
 		return nil, err
 	}
 
-	// Crie o caminho completo do arquivo no diretório "models".
+	// Create the full file path within the "models" directory.
 	filePath := filepath.Join(modelsDir, fmt.Sprintf("%s.gob", filename))
 
-	// Abra o arquivo para leitura.
+	// Open the file for reading.
 	file, err := os.Open(filePath)
 	if err != nil {
 		return nil, err
 	}
 	defer file.Close()
 
-	// Crie um decodificador Gob.
+	// Create a Gob decoder.
 	decoder := gob.NewDecoder(file)
 
-	// Decodifique o Gob em uma fatia de tokens.
+	// Decode the Gob into a slice of tokens.
 	tokens := []TokenTrain{}
 	if err := decoder.Decode(&tokens); err != nil {
 		return nil, err
@@ -249,6 +256,8 @@ func (n TextExtractor) ParseValueToStruct(input string, output interface{}, path
 			WordBefore: token.WordBefore,
 			WordAfter:  token.WordAfter,
 		}
+		// Remove } and { from WordBefore and WordAfter
+
 		p, have := n.GetValueBetweenTokens(input, train)
 		if have {
 			// Check if the tag is mapped to a field in the structure
@@ -297,7 +306,7 @@ func calculatePrecision(value string, tokenLength, characterCount, tokenCount in
 	return scaledPrecision
 }
 
-// GetModelsDir retorna o caminho absoluto para o diretório "models" na raiz do projeto.
+// GetModelsDir returns the absolute path to the "models" directory at the project's root.
 func (n TextExtractor) GetModelsDir() (string, error) {
 	return filepath.Abs(n.ModelsDir)
 }
