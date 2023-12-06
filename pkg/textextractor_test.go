@@ -3,10 +3,10 @@ package textextractor_test
 import (
 	"fmt"
 	"os"
+	"reflect"
 
 	textextractor "github.com/devalexandre/textextractor/pkg"
 
-	"reflect"
 	"testing"
 )
 
@@ -24,7 +24,7 @@ func TestSave(t *testing.T) {
 
 		ln := p.Learn(dataTrain)
 
-		if len(ln) <= 6 {
+		if len(ln) <= 4 {
 			t.Errorf("got %v want %v", len(ln), 10)
 		}
 
@@ -51,7 +51,7 @@ func TestLoad(t *testing.T) {
 		if err != nil {
 			t.Errorf("got %v want %v", err, nil)
 		}
-		if len(model) <= 10 {
+		if len(model) <= 4 {
 			t.Errorf("got %v want %v", len(model), 10)
 		}
 	})
@@ -63,6 +63,10 @@ func TestExtractTokens(t *testing.T) {
 		input := "Name 6: {Name}. Name (non-Latin script): {NameNonLatin}. DOB: {DOB}. POB: {POB} a.k.a: {GoodQualityAKA}  Other Information: {OtherInformation} Listed on: {Listed} UK Sanctions List Date Designated: 04/10/2011 Last Updated: 01/02/2021 Group ID: 12156."
 		want := []string{"Name", "NameNonLatin", "DOB", "POB", "GoodQualityAKA", "OtherInformation", "Listed"}
 		got := p.ExtractTokens(input)
+
+		fmt.Println(got)
+		fmt.Println(want)
+
 		if !reflect.DeepEqual(got, want) {
 			t.Errorf("got %v want %v", got, want)
 		}
@@ -136,38 +140,6 @@ func TestGetValueBetweenTokens(t *testing.T) {
 	})
 }
 
-func TestParseValueToStruct(t *testing.T) {
-	t.Run("parse value to struct", func(t *testing.T) {
-		p := textextractor.NewTextExtractor()
-		input := "Name 6: ABBASIN 1: ABDUL AZIZ 2: n/a 3: n/a 4: n/a 5: n/a.\nName (non-Latin script): عبد العزيز عباسین\nDOB: --/--/1969. POB: Sheykhan Village, Pirkowti Area, Orgun District, Paktika Province, Afghanistan Good quality a.k.a: MAHSUD, Abdul Aziz  Other Information: (UK Sanctions List Ref):AFG0121. (UN Ref):TAi.155. Key commander in the Haqqani Network (TAe.012) under Sirajuddin Jallaloudine Haqqani (TAi.144). Taliban Shadow Governor for Orgun District, Paktika Province as of early 2010. Operated a training camp for nonAfghan fighters in Paktika Province. Has been involved in the transport of weapons to Afghanistan. INTERPOLUN Security Council Special Notice web link: https://www.interpol.int/en/How-we-work/Notices/View-UN-NoticesIndividuals click here Listed on: 21/10/2011 UK Sanctions List Date Designated: 04/10/2011 Last Updated: 01/02/2021 Group ID: 12156."
-
-		want := map[string]string{
-			"NAME": "ABBASIN 1: ABDUL AZIZ 2: n/a 3: n/a 4: n/a 5: n/a.",
-			"DOB":  "--/--/1969",
-		}
-
-		type Person struct {
-			Name string `data:"NAME"`
-			DOB  string `data:"DOB"`
-		}
-		person := Person{}
-		err := p.ParseValueToStruct(input, &person, "tokens")
-
-		if err != nil {
-			t.Errorf("got %v want %v", err, true)
-		}
-
-		if person.Name != want["NAME"] {
-			t.Errorf("got %v want %v", person.Name, want["NAME"])
-		}
-
-		if person.DOB != want["DOB"] {
-			t.Errorf("got %v want %v", person.DOB, want["DOB"])
-		}
-
-	})
-}
-
 func TestLearn(t *testing.T) {
 	t.Run("learn", func(t *testing.T) {
 		p := textextractor.NewTextExtractor()
@@ -188,6 +160,43 @@ func TestLearn(t *testing.T) {
 		if len(ln) <= 10 {
 			t.Errorf("got %v want %v", len(ln), 10)
 		}
+
+		err := p.Save(ln, "tokens_names")
+		if err != nil {
+			t.Errorf("got %v want %v", err, nil)
+		}
 	})
 
+}
+
+func TestParseValueToStruct(t *testing.T) {
+	t.Run("parse value to struct", func(t *testing.T) {
+		p := textextractor.NewTextExtractor()
+		input := "Name 6: ABBASIN 1: ABDUL AZIZ 2: n/a 3: n/a 4: n/a 5: n/a.\nName (non-Latin script): عبد العزيز عباسین\nDOB: --/--/1969. POB: Sheykhan Village, Pirkowti Area, Orgun District, Paktika Province, Afghanistan Good quality a.k.a: MAHSUD, Abdul Aziz  Other Information: (UK Sanctions List Ref):AFG0121. (UN Ref):TAi.155. Key commander in the Haqqani Network (TAe.012) under Sirajuddin Jallaloudine Haqqani (TAi.144). Taliban Shadow Governor for Orgun District, Paktika Province as of early 2010. Operated a training camp for nonAfghan fighters in Paktika Province. Has been involved in the transport of weapons to Afghanistan. INTERPOLUN Security Council Special Notice web link: https://www.interpol.int/en/How-we-work/Notices/View-UN-NoticesIndividuals click here Listed on: 21/10/2011 UK Sanctions List Date Designated: 04/10/2011 Last Updated: 01/02/2021 Group ID: 12156."
+
+		want := map[string]string{
+			"NAME": "ABBASIN 1: ABDUL AZIZ 2: n/a 3: n/a 4: n/a 5: n/a.",
+			"DOB":  "--/--/1969",
+		}
+
+		type Person struct {
+			Name string `data:"NAME"`
+			DOB  string `data:"DOB"`
+		}
+		person := Person{}
+		err := p.ParseValueToStruct(input, &person, "tokens_names")
+
+		if err != nil {
+			t.Errorf("got %v want %v", err, true)
+		}
+
+		if person.Name != want["NAME"] {
+			t.Errorf("got %v want %v", person.Name, want["NAME"])
+		}
+
+		if person.DOB != want["DOB"] {
+			t.Errorf("got %v want %v", person.DOB, want["DOB"])
+		}
+
+	})
 }

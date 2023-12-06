@@ -10,6 +10,11 @@ import (
 	"strings"
 )
 
+type WordFrequency struct {
+	Word  string
+	Count int
+}
+
 type TokenTrain struct {
 	Name       string
 	WordBefore string
@@ -34,14 +39,27 @@ func NewTextExtractor() *TextExtractor {
 	}
 }
 
-// ExtractTokens extracts tokens from input using {}
+// ExtractTokens usando um analisador personalizado
 func (n TextExtractor) ExtractTokens(input string) []string {
-	tokens := []string{}
+	var tokens []string
+	var tokenBuffer string
+	insideToken := false
 
-	// Use regex to extract tokens from input in {}
-	regex := regexp.MustCompile(`\{([^\}]+)\}`)
-	for _, match := range regex.FindAllStringSubmatch(input, -1) {
-		tokens = append(tokens, match[1])
+	for _, char := range input {
+		switch char {
+		case '{':
+			insideToken = true
+			tokenBuffer = ""
+		case '}':
+			if insideToken {
+				tokens = append(tokens, tokenBuffer)
+				insideToken = false
+			}
+		default:
+			if insideToken {
+				tokenBuffer += string(char)
+			}
+		}
 	}
 
 	return tokens
