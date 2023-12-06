@@ -1,5 +1,9 @@
 # TextExtractor: A Powerful Text Processing Tool in Go
 
+![Coverage](https://img.shields.io/badge/Coverage-87.3%25-brightgreen)
+[![Go](https://github.com/devalexandre/textextractor/actions/workflows/go.yml/badge.svg)](https://github.com/devalexandre/textextractor/actions/workflows/go.yml)
+
+
 Welcome to `TextExtractor`, a versatile Go package designed for extracting and manipulating text with ease and precision. Whether you're dealing with structured or unstructured text, `TextExtractor` offers a suite of tools to tokenize, extract, and transform text data efficiently.
 
 
@@ -49,7 +53,7 @@ func main() {
 
 ### Contribuições e Suporte
 
-```markdown
+
 ## Contributing
 
 Contributions to `TextExtractor` are welcome! Whether it's bug reports, feature requests, or code contributions, feel free to open an issue or submit a pull request.
