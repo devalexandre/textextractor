@@ -1,56 +1,60 @@
-Claro, aqui está o README do TextExtractor em formato Markdown:
+# TextExtractor: A Powerful Text Processing Tool in Go
 
-markdown
+Welcome to `TextExtractor`, a versatile Go package designed for extracting and manipulating text with ease and precision. Whether you're dealing with structured or unstructured text, `TextExtractor` offers a suite of tools to tokenize, extract, and transform text data efficiently.
 
-# TextExtractor
 
-The `TextExtractor` is a Go package that provides a set of tools for extracting and manipulating text based on specified patterns. It can be particularly useful for tokenizing and extracting structured data from unstructured text.
+## Key Features
 
-## Features
+- **Token Extraction**: Seamlessly extract tokens from text within curly braces `{}`. Ideal for parsing templates or structured documents.
+- **Regex Generation**: Automatically generate regular expressions from tokens for advanced pattern matching.
+- **Contextual Extraction**: Retrieve text segments before or after specific tokens, enabling contextual analysis.
+- **Value Extraction**: Utilize trained models to extract values with precision, considering the surrounding context.
+- **Data Mapping**: Effortlessly map extracted values to struct fields, streamlining data processing workflows.
+- **Precision Calculation**: Evaluate the accuracy of extracted data with built-in precision scoring.
+- **Model Persistence**: Save and load your token models, making your data processing repeatable and reliable.
 
-- **Token Extraction**: Easily extract tokens from text enclosed within curly braces `{}`.
-- **Regex Generation**: Generate regular expressions from extracted tokens for pattern matching.
-- **Contextual Extraction**: Extract text that appears before or after a specified token.
-- **Value Extraction**: Extract values using trained models with before and after tokens.
-- **Data Mapping**: Map extracted values to struct fields based on data tags.
-- **Precision Calculation**: Calculate precision scores for extracted values.
-- **Model Persistence**: Save and load token training data for reuse.
 
 ## Installation
 
-To use the `TextExtractor` package in your Go project, you can install it using `go get`:
+Install `TextExtractor` with ease using Go's package manager:
 
 ```bash
-go get github.com/your-username/textextractor
+go get github.com/devalexandre/textextractor
+```
 
-Usage
-
-Here's an example of how to use the TextExtractor:
-
-go
-
+```go
 package main
 
 import (
-	"fmt"
-	"github.com/your-username/textextractor"
+    "fmt"
+    "github.com/devalexandre/textextractor"
 )
 
 func main() {
-	// Create a new TextExtractor instance
-	extractor := textextractor.NewTextExtractor()
+    // Initialize TextExtractor
+    extractor := textextractor.NewTextExtractor()
 
-	// Define a text input with tokens
-	input := "Hello, {Name}! Your email is {Email}."
+    // Sample text with tokens
+    input := "Hello, {Name}! Your appointment is on {Date}."
 
-	// Extract tokens from the input
-	tokens := extractor.ExtractTokens(input)
+    // Extract and process tokens
+    tokens := extractor.ExtractTokens(input)
+    regexPatterns := extractor.GenerateRegex(tokens)
 
-	// Generate regular expressions for the tokens
-	regexPatterns := extractor.GenerateRegex(tokens)
-
-	fmt.Println("Tokens:", tokens)
-	fmt.Println("Regex Patterns:", regexPatterns)
+    fmt.Println("Extracted Tokens:", tokens)
+    fmt.Println("Regex Patterns:", regexPatterns)
 }
 ```
+
+
+### Contribuições e Suporte
+
+```markdown
+## Contributing
+
+Contributions to `TextExtractor` are welcome! Whether it's bug reports, feature requests, or code contributions, feel free to open an issue or submit a pull request.
+
+## Support
+
+If you encounter any problems or have questions, please open an issue on GitHub. We're here to help!
 
