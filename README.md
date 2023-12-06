@@ -49,7 +49,7 @@ func main() {
 
 ### Contribuições e Suporte
 
-```markdown
+
 ## Contributing
 
 Contributions to `TextExtractor` are welcome! Whether it's bug reports, feature requests, or code contributions, feel free to open an issue or submit a pull request.
