@@ -2,7 +2,7 @@ name :  Quality Gate - Test coverage
 on:
   push:
     branches:
-      - main
+      - master
     paths-ignore:
       - "**/*.md"
 
