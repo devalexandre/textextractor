@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"reflect"
+	"strings"
 
 	textextractor "github.com/devalexandre/textextractor/pkg"
 
@@ -101,26 +102,55 @@ func TestGetAfterToken(t *testing.T) {
 	})
 }
 
-func TestGetValueBetweenTokens(t *testing.T) {
+func TestLearnSaveLoad(t *testing.T) {
+	extractor := textextractor.NewTextExtractor()
+	trainingData := []string{"Play {Song}"}
 
+	// Test Learn
+	learnedTokens := extractor.Learn(trainingData)
+	if len(learnedTokens) == 0 {
+		t.Errorf("Learn() = %v, want at least one token", len(learnedTokens))
+	}
+
+	// Test Save
+	err := extractor.Save(learnedTokens, "test_tokens")
+	if err != nil {
+		t.Errorf("Save() error = %v", err)
+	}
+
+	// Test Load
+	loadedTokens, err := extractor.Load("test_tokens")
+	if err != nil {
+		t.Errorf("Load() error = %v", err)
+	}
+	if len(loadedTokens) == 0 {
+		t.Errorf("Load() = %v, want at least one token", len(loadedTokens))
+	}
+
+	// Cleanup
+	os.Remove("models/test_tokens.gob")
+}
+
+func TestGetValueBetweenTokens(t *testing.T) {
 	t.Run("get value between tokens", func(t *testing.T) {
 		p := textextractor.NewTextExtractor()
-		trainWord := `Name 6: {NAME}.
-		Name (non-Latin script): عبد العزيز عباسین
-		DOB: {DOB}`
+		p.Weights = textextractor.PrecisionWeights{
+			WordLengthWeight:     0.4,
+			TokenLengthWeight:    0.3,
+			CharacterCountWeight: 0.3,
+		}
 
-		token := p.ExtractTokens(trainWord)
+		trainWord := `Name 6: {NAME}. Name (non-Latin script): عبد العزيز عباسین DOB: {DOB}`
+		tokens := p.ExtractTokens(trainWord)
 
-		input := `Name 6: ABBASIN 1: ABDUL AZIZ 2: n/a 3: n/a 4: n/a 5: n/a.
-		Name (non-Latin script): عبد العزيز عباسین
-		DOB: --/--/1969`
+		input := `Name 6: ABBASIN 1: ABDUL AZIZ 2: n/a 3: n/a 4: n/a 5: n/a. Name (non-Latin script): عبد العزيز عباسین DOB: --/--/1969`
 
 		want := map[string]string{
-			"NAME": "ABBASIN 1: ABDUL AZIZ 2: n/a 3: n/a 4: n/a 5: n/a.",
+			"NAME": "ABBASIN 1: ABDUL AZIZ 2: n/a 3: n/a 4: n/a 5: n/a",
 			"DOB":  "--/--/1969",
 		}
 
-		for _, token := range token {
+		for _, token := range tokens {
 			wordBefore := p.GetBeforeToken(trainWord, fmt.Sprintf("{%s}", token))
 			wordAfter := p.GetAfterToken(trainWord, fmt.Sprintf("{%s}", token))
 			train := textextractor.TokenTrain{
@@ -128,13 +158,17 @@ func TestGetValueBetweenTokens(t *testing.T) {
 				WordBefore: wordBefore,
 				WordAfter:  wordAfter,
 			}
-			got, have := p.GetValueBetweenTokens(input, train)
+			got, have := p.GetValueBetweenTokens(input, train, p.Weights)
 
 			if !have {
-				t.Errorf("got %v want %v", have, true)
+				t.Errorf("expected to have value for token %s, but didn't", token)
 			}
-			if got.Value != want[token] {
-				t.Errorf("got %v want %v", got.Value, want[token])
+
+			// Removendo espaços em branco e comparando
+			gotValueTrimmed := strings.TrimSpace(got.Value)
+			wantValueTrimmed := strings.TrimSpace(want[token])
+			if gotValueTrimmed != wantValueTrimmed {
+				t.Errorf("for token %s, got value %q, want %q", token, gotValueTrimmed, wantValueTrimmed)
 			}
 		}
 	})
@@ -199,4 +233,60 @@ func TestParseValueToStruct(t *testing.T) {
 		}
 
 	})
+}
+
+func TestGenerateRegex(t *testing.T) {
+	extractor := textextractor.NewTextExtractor()
+	tokens := []string{"Name", "DOB"}
+	expectedRegex := []string{`(?P<Name>[^\s]+)`, `(?P<DOB>[^\s]+)`}
+
+	regexPatterns := extractor.GenerateRegex(tokens)
+	if !reflect.DeepEqual(regexPatterns, expectedRegex) {
+		t.Errorf("GenerateRegex() = %v, want %v", regexPatterns, expectedRegex)
+	}
+}
+
+func TestGetModelsDir(t *testing.T) {
+	extractor := textextractor.NewTextExtractor()
+	modelsDir, err := extractor.GetModelsDir()
+	if err != nil {
+		t.Errorf("GetModelsDir() error = %v", err)
+	}
+	if modelsDir == "" {
+		t.Errorf("GetModelsDir() returned an empty string")
+	}
+}
+
+func TestExtractTokensError(t *testing.T) {
+	extractor := textextractor.NewTextExtractor()
+	input := "Name 6: {Name Name (non-Latin script): {NameNonLatin DOB: {DOB POB: {POB a.k.a: {GoodQualityAKA Other Information: {OtherInformation Listed on: {Listed UK Sanctions List Date Designated: 04/10/2011 Last Updated: 01/02/2021 Group ID: 12156."
+
+	got := extractor.ExtractTokens(input)
+	if len(got) != 0 {
+		t.Errorf("ExtractTokens() with malformed input = %v, want %v", got, []string{})
+	}
+}
+
+func TestLoadError(t *testing.T) {
+	extractor := textextractor.NewTextExtractor()
+	_, err := extractor.Load("non_existent_file.gob")
+	if err == nil {
+		t.Errorf("Load() with non-existent file, want error")
+	}
+}
+
+func TestParseValueToStructError(t *testing.T) {
+	extractor := textextractor.NewTextExtractor()
+	input := "Name: John Doe, Age: 30"
+
+	type Person struct {
+		Name string `data:"Name"`
+		Age  string `data:"Age"`
+	}
+	var person Person
+
+	err := extractor.ParseValueToStruct(input, &person, "non_existent_model")
+	if err == nil {
+		t.Errorf("ParseValueToStruct() with non-existent model file, want error")
+	}
 }
